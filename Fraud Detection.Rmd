@@ -1,0 +1,1185 @@
+---
+title: "Fraud Detection Through Supervised Learning In The E-Commerce Industry"
+author: "David Mwasikira, Ilham Seladji, Jamal Alshanableh, Khalid Abbas, Khansa Pathan, Zenah Alzubaidi"
+date: 'November 15th, 2020'
+output:
+  pdf_document:
+    latex_engine: xelatex
+  html_document:
+    df_print: paged
+header-includes: \usepackage{booktabs}
+---
+
+
+```{r setup, global_options, echo=FALSE, include=FALSE}
+#Global settings
+knitr::opts_chunk$set(
+                  echo = FALSE, 
+                  message = FALSE, 
+                  warning = FALSE, 
+                  error = FALSE,
+                  collapse = TRUE)
+
+library(knitr)        
+library(kableExtra)   
+```
+
+# I. Introduction:
+
+## 1. Motivation: 
+
+Since the e-commerce industry has been booming for a couple of decades now, with companies such as Amazon being on top of the list, it is worthwhile and intriguing to analyze datasets related to the giant business model of e-commerce. We can gain insights into any e-commerce company’s hottest selling products, maximum profits, continents and countries with maximum number of customers, months of the year that yield the highest sales, etc and significantly scale our business. 
+
+## 2. Problem Statement:
+
+E-commerce payment fraud is a very common problem that has been prevalent right from the launch of e-commerce platforms. Ever since businesses discovered a way through which customers could safely buy their products without visiting a physical store, hackers have done their best to steal that information and benefit from it.
+It is very crucial for online businesses to identify fraudulent transactions from the genuine ones the moment they crop up in order to:
+
+  1. Reduce their losses and increase profits substantially. 
+  
+  2. Incorrectly identifying a genuine transaction to be a fraudulent one can unnecessarily delay a shipment that might make the e-commerce store lose a good customer and end up with a bad review.
+
+
+## 3. Function of the system:
+
+The main function of our classification system is to analyze the supply chain of orders with their associated costs and classify the transactions that are likely to be fraudulent against genuine transactions in addition to identifying gaps that drive fraudulent transactions and take the necessary steps to eliminate them in order to optimize the performance of e-commerce services, using supervised learning.
+
+## 4. Goals and Beneficiaries:
+
+### Goals:
+
+  1. Recognize fraudsters from legitimate clients, based on thousands of previous transactions. 
+  
+  2. Help e-commerce businesses to develop a tailored Fraud risk management program.
+  
+  3. Identify fraudulent activities which block e-commerce platforms.
+  
+  4. Ultimately save e-commerce businesses great amounts of money.
+ 
+### Beneficiaries:
+
+  1. E-commerce Companies: Fraud detection can significantly help the e-commerce industry to conduct its business smoothly without worrying about ambiguous transactions and losing profits in the process. 
+  
+  2. Customers: It can also safeguard the interest of e-commerce customers from being robbed of their personal/credit card information and make illegal transactions on their behalf.
+
+## 5. Candidate Algorithms:
+
+The following classification algorithms will be used in our analysis:
+
+  1. K-Nearest neighbors: Classifies an example based on the majority class within the "K" nearest samples.
+  
+  2. Neural Networks (Main Algorithm): Mimic the way the human brain operates. Neural networks process information from a layer to another by finding relationships between features and targets.
+  
+  3. Random forest: Builds multiple decision trees in the training phase and outputs the majority class of those trees.
+  
+  4. Support Vector Machines: Separate different classes with a hyperplane (or a number of hyperplanes) in such a way that inter-class distance is maximized.
+  
+  5. Logistic Regression: Just like in a linear regression model, data is acted upon by a logistic function to predict a target categorical variable which can either be binary or multivariate.
+  
+Since neural networks are a part of deep learning techniques and are an advanced application of Machine Learning, we will use it as our core algorithm that we can fine tune to get optimal results and compare its performance with other machine learning algorithms.
+
+## 6. Alternative Solutions:
+
+  1. Using different algorithms like Linear Discriminant Analysis, Gaussian Naive Bayes, Extra Trees classification, Extreme Gradient Boosting and metrics like recall, F1 score, precision, log loss and Mean Absolute Error (MAE). 
+  
+  2. Comparing ML algorithms with several Deep Learning networks such as MLPs and CNNs.
+  
+  3. Probability-predicting regression model can be used as part of a classifier by imposing a decision rule 
+
+
+## 7. Related Work:
+
+Various ML algorithms were implemented for this data set and compared to each other using metrics such as RMSE and MAE, in Python.
+
+
+# II.  Data Exploration: 
+
+The dataset used in this project is the [**DataCo Smart Supply Chain [1]**](https://data.mendeley.com/datasets/8gx2fvg2k6/5). It is specific to the **DataCo Global** company, and it encompasses information about 180,519 orders and shipments across different continents for various categories of products such as *sportswear, footwear, electronics and medical equipment*.
+
+Those orders are characterized by 53 numerical and categorical features, among which the **Order Status** is the target variable. The most important features are described in the following data dictionary:
+
+```{r dictionary}
+
+columns = c("Type", "Benefit per order", "Sales per customer", "Category ID", "Category Name", "Customer City", "Customer Country", "Customer Segment", "Department ID", "Department Name", "Latitude", "Longitude", "Market", "Order Country", "Order Customer ID", "Order Date", "Order ID", "Order Item Discount", "Order Item Discount Rate", "Order Item Id", "Order Item Product Price", "Order Item Profit Ratio", "Order Item Quantity", "Sales", "Order Item Total", "Order Profit Per Order", "Order Region", "Order State", "Product Card Id", "Product Category Id", "Product Name", "Product Price", "Product Status", "Shipping date (DateOrders)", "Shipping Mode","Late delivery risk", "Delivery Status", "Order Status (Target Attribute)" )
+
+descriptions = c("Type of transaction made", "Earnings per order placed", "Total sales per customer", "Product category code", " Description of the product category", "City where the customer made the purchase", "Country where the customer made the purchase", "Types of Customers: Consumer , Corporate , Home Office", "Department code of store", "Department name of store", "Latitude corresponding to location of store", " Longitude corresponding to location of store", "Market to where the order is delivered : Africa , Europe , LATAM , Pacific Asia , USCA", "Destination country of the order", "Customer order code", "Date on which the order is made", "Order code", "Order item discount value", "Order item discount percentage", "Order item code", "Price of products without discount", "Profit Ratio of an Item in an Order", "Number of products per order", "Value in sales", " Total amount per order", "Profit of an Order", "Region of the world where the order is delivered :  Southeast Asia ,South Asia ,Oceania ,Eastern Asia, West Asia , West of USA , US Center , West Africa, Central Africa ,North Africa ,Western Europe ,Northern , Caribbean , South America ,East Africa ,Southern Europe , East of USA ,Canada ,Southern Africa , Central Asia ,  Europe , Central America, Eastern Europe , South of  USA ", "State of the region where the order is delivered", "Product code", "Product category code", "Name of Product", "Price of Product", "Status of the product stock: 1 if the product is not available, 0 if it is available ", "Exact date and time of shipment", "The following shipping modes are presented : Standard Class , First Class , Second Class , Same Day","Categorical variable that indicates if sending is late (1) or not (0)", "Delivery status of orders: Advance shipping , Late delivery , Shipping canceled , Shipping on time", " Order Status : COMPLETE , PENDING , CLOSED , PENDING_PAYMENT ,CANCELED , PROCESSING ,SUSPECTED_FRAUD ,ON_HOLD ,PAYMENT_REVIEW")
+
+types = c("chr ", "num", "num", "int", "chr", "chr", "chr", "chr",  "int", "chr", "num", "num", "chr", "chr", "int", "chr", "int", "num", "num", "int", "num", "num", "int", "num", "num", "num", "chr", "chr",  "chr", "int", "int",  "chr", "num", "int", "chr", "chr", "int", "chr")
+
+examples = c("Debit, Transfer, Cash", "91.2, -249.1", "315, 311", "73", "Sporting Goods, Cameras", "Caguas, San Jose", "Puerto Rico, USA", "Consumer, Home Office", "2", "Fitness", "18.3", "-66", "Pacific Asia", "Indonesia, Australia", "20755", "1/31/2018 22:56", "77202", "13.1", "0.04", "180517", "328", "0.29", "1", "328", "315", "91.2", "Southeast Asia", "Queensland, Java Occidental", "1360", "73",  "Smart Watch", "328", "0, 1", "2/3/2018 22:56", "Standard Class, First Class, Same Day, Second Class", "0, 1", "Advance Shipping, Late Delivery", "Complete, Pending, Closed")
+
+#Table Header
+h1 = "Field Name"
+h2 = "Description"
+h3 = "Type"
+h4 = "Examples"
+
+dictionary = data.frame(columns, descriptions, types, examples, stringsAsFactors=FALSE)
+names(dictionary) = c(h1, h2, h3, h4)
+library(pander)
+pander(dictionary)
+```
+
+
+```{r initialize, message=FALSE}
+
+# Load the packages into R
+library(dplyr)
+library(tidyverse, warn.conflicts = FALSE)
+library(data.table, warn.conflicts = FALSE)
+library(DT)
+library(Hmisc)
+library(xtable)
+library(leaflet)
+library(corrplot)
+library(hrbrthemes)
+library(lubridate)
+library(leaps)
+library(kableExtra)
+```
+
+
+```{r raw_data1}
+
+supply_data<-fread("DataCoSupplyChainDataset.csv")
+names(supply_data)<-names(supply_data) %>%
+  stringr::str_replace_all("\\s", ".")
+```
+
+
+## 1. Understanding The Data: Preliminary Data Inspection:
+
+```{r column_in_data1, results = "hide"}
+colnames(supply_data)
+```
+
+
+```{r, results="hide"}
+#Data structure
+str(supply_data)
+```
+
+
+Preview of The Original Dataset:
+
+```{r view-1}
+library(devtools)
+library(pander)
+
+
+pander(head(supply_data))
+
+```
+
+As we can see, some features are duplicated (e.g. *Category ID* and *Category Name*) and others carry sensitive information which has been hidden (e.g. *Customer Email* and *Customer Password*). Hence, they will be dropped.
+
+## 2. Data Cleaning:
+
+### 2.1. Dropping Columns by Column name:
+
+```{r data_cleaning, message=FALSE,warning=FALSE}
+
+my_data <- supply_data
+
+my_data_trim <- within(my_data, rm(Customer.Email, 
+                                  Customer.Country,
+                                  Customer.City,
+                                  Customer.Fname, 
+                                  Customer.Lname, 
+                                  Customer.Password, 
+                                  Customer.Street, 
+                                  Order.Item.Cardprod.Id, 
+                                  Order.State, 
+                                  Order.Zipcode, 
+                                  Product.Description, 
+                                  Product.Image, 
+                                  Product.Name, 
+                                  Product.Category.Id,
+                                  Customer.State,
+                                  Order.Customer.Id,
+                                  Order.Id,
+                                  Customer.Zipcode,
+                                  Department.Name
+                                  ))
+```
+
+The following features are irrelevant to our analysis at this stage and should therefore be dropped: *Customer City, Customer Country, Customer Email, Customer Fname, Customer Lname, Customer Password, Customer Street, Order Item Cardprod ID, Order State, Order Zipcode, Product Category Id, Product Description, Product Image, Product Name, Customer State, Order Customer ID, Order ID, Customer Zipcode, Department Name*.
+
+The remaining columns will be reviewed based on our analysis of the importance and
+weight of each attribute towards working out our solution.
+
+
+```{r trimmed_data, results="hidden"}
+library(devtools)
+library(pander)
+
+pander(head(my_data_trim))
+
+```
+
+
+### 2.2. Checking for missing values in the dataset:
+
+```{r total_NAs, message=FALSE,warning=FALSE, results="hide"}
+colSums(is.na(my_data_trim))
+```  
+
+Columns with missing values have already been dropped in the previous stage. Thus, the data is complete for future processing.  
+
+### 2.3. Data Summary:
+
+The following summary shows the most extreme values (minimum and maximum), lower and upper quartiles, mean and median of each numerical feature. They give a better understanding of what kind of values we are dealing with:
+
+```{r}
+summary(my_data_trim)
+```
+
+
+# III. Data Analysis & Visualization:
+
+```{r chart-colors, echo=FALSE}
+#Creating Color Variables for use in Plot Fills
+fillColor1 = "#0080FF"
+fillColor2 = "#00FFFF"
+fillColor3 = "#81C0FF"
+fillColor4 = "#00FF00"
+fillColor5 = "#FF00FF"
+```
+
+
+## 1. Analysis of Order Delivery Performance:
+
+Here, we seek to answer several questions outlined below and try further to gain insights from the data, extracting valuable information:  
+
+  1. Which Product Categories generate most sales? Do these sales always generate profits to the company?
+  2. Where are orders delivered?
+  3. What is the distribution of Late Deliveries compared to On Time and Advanced Deliveries?
+  4. What are the shipping modes used?
+  5. In which month(s) of the year are there higher orders?
+  6. What are the most common statuses of orders?
+  7. Which shipping modes suffer from late deliveries the most?
+  8. What are late deliveries caused by?
+  9. How many fraudulent transactions are there, compared to genuine ones?
+ 10. Where are those frauds coming from?
+ 11. Who are the biggest fraudsters?
+
+
+### 1.1. Which Product Categories generate most sales? (Top 10 Item Categories Delivered):
+
+```{r top_items,message=FALSE,warning=FALSE}
+
+my_data_trim %>%
+      group_by(Category.Name) %>%
+      summarise(Count = n()) %>%
+      ungroup() %>%
+      mutate(Category.Name = reorder(Category.Name,Count)) %>%
+      arrange(desc(Count)) %>%
+      head(10) %>%
+  
+      ggplot(aes(x = Category.Name,y = Count)) +
+      geom_bar(stat='identity',colour="white", fill = "#0F8FE5") +
+      geom_text(aes(x = Category.Name, y = 1, 
+                label = paste0("(",Count,")",
+                               sep="")),
+            hjust=-0.5, vjust=.5, size = 4, colour = 'black',
+            fontface = 'bold') +
+      labs(x = 'Item Category', 
+           y = 'Sales', 
+           title = 'Number of Items Sold By Category') +
+      coord_flip() + 
+      theme_bw()
+
+```
+
+*Cleats, Men's Footwear, Women's Apparel, Indoor/Outdoor Games, Fishing, Water Sports, Camping & Hiking, Cardio Equipment, Sporting Equipment* and *Electronics* are the 10 most sold Item Categories by **DataCo Global**. But do they always generate profits to the company?
+
+```{r message=FALSE,warning=FALSE}
+
+my_data_trim[my_data_trim$Benefit.per.order < 0,] %>%
+      group_by(Category.Name) %>%
+      summarise(Count = n()) %>%
+      ungroup() %>%
+      mutate(Category.Name = reorder(Category.Name,Count)) %>%
+      arrange(desc(Count)) %>%
+      head(10) %>%
+  
+      ggplot(aes(x = Category.Name,y = Count)) +
+      geom_bar(stat='identity',colour="white", fill = "#F05321") +
+      geom_text(aes(x = Category.Name, y = 1, 
+                label = paste0("(",Count,")",
+                               sep="")),
+            hjust=-0.5, vjust=.5, size = 4, colour = 'black',
+            fontface = 'bold') +
+      labs(x = 'Item Category', 
+           y = 'Sales', 
+           title = 'Categories With The Most Losses (Benefit < 0)') +
+      coord_flip() + 
+      theme_bw()
+
+```
+
+As we can see, the categories with most sales cause the highest losses to the company. For instance, 18.7% of *Cleats* sales, 18.74% of *Men's Footwear* sales and 18.65% of *Women's Apparel* sales generate losses to the company. These losses might be related to frauds, cancellations or discounts related to late deliveries.
+
+### 1.2 Where are orders Delivered?:
+
+```{r,message=FALSE,warning=FALSE}
+
+my_data_trim %>%
+    group_by(Market) %>%
+    filter(!is.na(Market)) %>%
+    summarise(Count = n()) %>%
+    ungroup() %>%
+    mutate(Market = reorder(Market,Count)) %>%
+    arrange(desc(Count)) %>%
+    head(10) %>%
+  
+    ggplot(aes(x = Market,y = Count)) +
+    geom_bar(stat='identity',
+             colour="white", 
+             fill = "#FF5733") +
+    geom_text(aes(x = Market, 
+                  y = 1, 
+                  label = paste0("(",Count,")",
+                                 sep="")),
+            hjust=0.5, vjust=-2.5, size = 4, colour = 'black',
+            fontface = 'bold') +
+  labs(x = 'Market Region', 
+       y = 'Number Of Orders', 
+       title = 'Number of Orders By Market') +
+  theme_bw()
+
+```
+
+Products are delivered to *Africa, United States and Canada, Pacific Asia, Europe* and *Latin America*. 56.42% of those products are delivered to *Europe* and *Latin America*, with *Latin America* being the top delivery destination.
+
+### 1.3. What is the distribution of Late Deliveries compared to On-Time and Advanced Deliveries?:
+
+```{r message=FALSE,warning=FALSE}
+
+dataset <- my_data_trim
+ggplot(dataset, aes(Late_delivery_risk)) + 
+  geom_histogram(stat = "count", fill = "#9FC98A") +
+  labs(x="Late Delivery Risk", 
+       y="Orders Delivered", 
+       title = "Late VS On-Time and Advanced Deliveries") +
+ theme_bw() + theme(axis.text.x = element_text(angle=65, 
+                                               vjust=0.6, size = 7))
+```
+
+98,977 orders are not delivered on time, which represent 54.83% of the total number of orders. That is a huge and surprising number which needs some investigation to know what factors drive so many late deliveries, such as planning issues, misspelled addresses or even lost packages.
+
+The remaining orders (45.17%) are not late (they can either be delivered in advance, on time or are counted towards canceled orders), as we can see in the following bar chart:
+
+```{r order_performance,message=FALSE,warning=FALSE}
+
+my_data_trim %>%
+      group_by(Delivery.Status) %>%
+      summarise(Count = n()) %>%
+      ungroup() %>%
+      mutate(Delivery.Status = reorder(Delivery.Status,Count)) %>%
+      arrange(desc(Count)) %>%
+      head(20) %>%
+  
+      ggplot(aes(x = Delivery.Status,y = Count)) +
+      geom_bar(stat='identity',colour="white", fill = "#F4A5BE") +
+      geom_text(aes(x = Delivery.Status, y = 1, 
+                label = paste0("(",Count,")",
+                               sep="")),
+            hjust= 0.5, vjust= -2.5, size = 4, colour = 'black',
+            fontface = 'bold') +
+      labs(x = 'Delivery Status', 
+           y = 'Number Of Orders', 
+           title = 'Delivery Performance') +
+      theme_bw()
+
+```
+
+### 1.4. What are the Shipping Modes used?:
+
+```{r}
+
+library(treemap)
+
+shipping_modes = my_data_trim %>% group_by(Shipping.Mode) %>% summarise(count=n())
+labels = paste0(shipping_modes$Shipping.Mode, " (", shipping_modes$count,")", sep="")
+shipping_modes %>% treemap(
+            index="Shipping.Mode",
+            vSize="count", 
+            vColor = labels,
+            title="Number of Orders per Shipping Mode",
+            type="index"
+            )
+```
+
+The most common shipping mode is the **Standard Class** mode followed by **Second Class**, **First Class** and **Same Day** Deliveries.
+
+### 1.5. In which month(s) of the year are there higher orders?:
+
+
+```{r}
+library(lubridate)
+
+months = my_data_trim %>% mutate(Month = month(mdy_hm(`shipping.date.(DateOrders)`))) %>%           
+   group_by(Month) %>% summarise(Count=n())                                  
+ months = arrange(months, Month)
+ months$Month = month.abb[months$Month]
+ months %>% ggplot(aes(x=Month,y=Count )) + geom_line(aes(group=1), color = "#BB8FCE") + geom_point(color="#890A51", size=3) + xlab("Months") +
+   scale_x_discrete(limits = months$Month) +                                 
+   scale_y_continuous(labels = scales::comma) +                              
+   ylab("Number of Orders")+
+   ggtitle("Orders By Month") + theme_bw()
+
+
+```
+
+The highest number of orders are made in January. This can be caused by new year discounts or by the fact that a lot of companies launch and put their new products on the market at the beginning of the year.
+
+### 1.6. What are the most common statuses of orders?:
+
+```{r, message=FALSE}
+
+my_data_trim %>% group_by(Order.Status) %>% summarise(count=n()) %>% 
+  ggplot(aes(x=Order.Status, y=count)) +
+  geom_segment( aes(x=Order.Status, xend=Order.Status, y=0, yend=count), color="#716D6D") +
+  geom_point( color="orange", size=2) +
+  theme_light() +
+  theme(
+    panel.grid.major.x = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks.x = element_blank()
+  ) +
+  xlab("Order Status") +
+  ylab("Number of Orders")+
+  ggtitle("Statuses of Orders") + theme_bw() + coord_flip()
+
+```
+
+Most orders are **Complete** while a relatively important number of orders are **Pending Payment**. This opens the floor for many assumptions: 
+
+ - Buyers hesitate to complete their purchases,
+ 
+ - Buyers want to maximize products in their carts in order to minimize orders and consequently minimize shipping fees,
+ 
+ - Some credit cards are rejected,
+ 
+ - Clients' banks consider those transactions as fraudulent,
+ 
+ - The company's online payment system is defective (unacknowledged transactions, security breaches, etc.).
+ 
+### 1.7. Which shipping modes suffer from late deliveries the most?:
+
+```{r message=FALSE}
+
+delayed_orders = my_data_trim[my_data_trim$Late_delivery_risk==1,] %>% group_by(Shipping.Mode) %>% summarise(count=n())
+pie(delayed_orders$count, labels = paste0(delayed_orders$Shipping.Mode," (", round(delayed_orders$count/sum(delayed_orders$count)*100, 2),"%)", sep=""), main = "Number of Delayed Orders per Shipping Mode")
+
+```
+
+**Standard Class** and **Second Class** deliveries have the most number of late deliveries among other shipping modes, while **Same Day** and **First Class** deliveries have the least number of late deliveries. This is totally understandable since priority classes generally benefit from premium services for additional fees.
+
+### 1.8. What are late deliveries caused by?:
+
+```{r}
+
+status = my_data_trim %>% group_by(Delivery.Status, Order.Status) %>% summarise(count=n())
+
+ggplot(status, aes(x=Order.Status,y=count)) +
+   geom_bar(stat="identity", fill ="#16A085") + facet_grid(Delivery.Status ~ .) +
+   xlab("Order Status") + ylab("Number of Orders") +
+   coord_flip() + ggtitle("Order Statuses Per Delivery Status") + theme_bw()
+
+```
+
+34.55% of late deliveries are **Complete** and 23.16% of them are **Pending Payment**. *DataCo Global* need to put their focus on their payment system, since they have a lot of pending payments. **Advance Shippings** and **On-time Shippings** also have a good number of pending payments.
+
+We can also see that orders with **Suspected Frauds** are automatically canceled.
+
+### 1.9. How many fraudulent transactions are there, compared to genuine ones?:
+
+```{r rankings, message=FALSE,warning=FALSE}
+
+fraud = c()
+for(i in 1:nrow(my_data_trim)){
+  if(my_data_trim$Order.Status[i]=="SUSPECTED_FRAUD")
+    fraud = c(fraud, "FRAUD")
+  else
+    fraud = c(fraud, "NON-FRAUD")
+}
+ggplot(cbind(my_data_trim,fraud), aes(fraud)) + 
+  geom_histogram(stat = "count", fill = "#900C3F") +
+  labs(x="Order Status", 
+       y="Number of Orders", 
+       title = "Genuine VS Fraudulent Transactions") +
+ theme_bw() + theme(axis.text.x = element_text(angle=65, 
+                                               vjust=0.6, size = 7))
+```
+
+Fraudulent transactions account for 2.3% of total transactions, which is somehow high and can cause the company huge losses in the long term.
+
+### 1.10. Where are those frauds coming from?:
+
+```{r}
+library(reshape2)
+
+fraud_regions = my_data_trim[my_data_trim$Order.Status=="SUSPECTED_FRAUD",] %>%
+      group_by(Order.Region) %>%
+      summarise(Count1 = n())
+
+trans_fraud_regions = my_data_trim[my_data_trim$Order.Region %in% fraud_regions$Order.Region,] %>% group_by(Order.Region) %>%
+      summarise(Count2 = n()) 
+
+df = cbind(fraud_regions, trans_fraud_regions$Count2) %>%
+      arrange(desc(Count1)) %>% head(10)
+
+ggplot(melt(df),aes(Order.Region,value,fill=variable))+
+     geom_bar(stat="identity",position="dodge") + coord_flip() + labs(x = 'Order Region', y = 'Number Of Fraudulent Transactions', title = '10 Top Regions With Highest Frauds') + scale_fill_discrete(name = "variable", labels = c("Number Of Frauds", "Number Of Orders")) + theme_bw()
+
+```
+
+
+We can see that the main source of frauds is Western Europe, with 17.36% of total frauds, followed by Central America (15.53%) and South America (8.89%). That is understandable since they have the most orders. Orders from those regions have to be checked carefully and thoroughly.
+
+### 1.11. Who are the biggest fraudsters?:
+
+Here we will display the biggest fraudsters' unique IDs, since two fraudsters can have the same first and last names, and using their names might lead to false statistics. 
+
+```{r}
+my_data_trim[my_data_trim$Order.Status=="SUSPECTED_FRAUD",] %>%
+      group_by(Customer.Id) %>%
+      summarise(Count = n()) %>%
+      ungroup() %>%
+      mutate(Customer.Id = reorder(Customer.Id,Count)) %>%
+      arrange(desc(Count)) %>%
+      head(10) %>%
+  
+      ggplot(aes(x = Customer.Id,y = Count)) +
+      geom_bar(stat='identity',colour="white", fill = "#FFC300") +
+      geom_text(aes(x = Customer.Id, y = 1, 
+                label = paste0("(",Count,")",
+                               sep="")),
+            hjust=-0.5, vjust=.5, size = 4, colour = 'black',
+            fontface = 'bold') +
+      labs(x = 'Customer Id', 
+           y = 'Number Of Fraudulent Transactions', 
+           title = 'Biggest Fraudsters') +
+      coord_flip() + 
+      theme_bw()
+```
+
+```{r}
+# my_data[my_data$Customer.Id==11584, c(13,15)]
+# my_data[my_data$Customer.Id==9819, c(13,15)]
+# my_data[my_data$Customer.Id==9010, c(13,15)]
+# my_data[my_data$Customer.Id==9002, c(13,15)]
+```
+
+
+**Jeffrey Wilcox**, **Crystal Smith**, **David Donovan** and **Mary Mullins** are on the top of the blacklist, followed by many other fraudsters. Their transactions have to be watched carefully. Otherwise, if they persist with fraud attempts, they should be banned from the platform.
+
+# IV. Classification:
+
+In this section, we will implement five classification models in order to predict the likelihood of **Fraudulent Transactions** for new orders (i.e. Whether a transaction is expected to be fraudulent or not). Consequently, e-commerce businesses can try to do the necessary to avoid cancellations, since we have discovered previously that orders which are suspected as fraudulent are automatically cancelled.
+
+## 1. Preprocessing (2nd Leg):
+
+As mentioned previously, a number of nominal attributes have been kept for the purpose of doing meaningful visualizations. However, some of them are irrelevant to our predictions, others are duplicated and some others need to be encoded into ordinal variables. 
+
+Based on the correlation matrix (Kindly refer to the *Correlations1.xlsx* file), a lot of features have a correlation of **0.99**, which means that we have the same information with different metadata.
+
+The initial supply chain data set will be transformed as follows:
+
+  1. *Benefit Per Order* and *Order Profit Per Order* are the same. Thus, one of them will be dropped. The same procedure applies to:
+  
+      - *Sales Per Customer*, *Sales* and *Order Item Total*
+      
+      - *Category ID*, *Product Category ID*, *Order Customer ID*, *Order Item Category ID* and *Product card ID*
+      
+      - *Order Item Product Price* and *Product Price*
+  
+  2. Category Names (Nominal) will be removed and Category IDs (Numerical) will be kept.
+  
+  3. Transaction Types, Delivery Statuses, Customer Segments, Markets, Order Cities & Countries and Shipping Modes will be encoded into ordinal variables (e.g. 1 for Standard Class, 2 for First Class, 3 for Second Class and 4 for Same Day orders).
+  
+  4. Dates, which are stored as Strings, will be parsed as POSIXct objects with the "yyyy-mm-dd UTC" format and then divided as four features for years, months, days and hours.
+  
+  5. The target feature *(Fraud)* will be added based on Order Statuses (1 for the Suspected Fraud status and 0 for other statuses)
+  
+  6. The *Product Status* feature, which is single-valued, will not affect our models in any way. Thus, it will be dropped too.
+    
+
+```{r preprocessing_leg2}
+
+new_data = within(my_data_trim, rm(Category.Name, `Days.for.shipping.(real)`, Late_delivery_risk, Order.Region))
+
+
+#Encode categorical features
+encode_ordinal <- function(x) {
+  x <- as.numeric(factor(x, levels = unique(x)))
+}
+
+new_data$Type = encode_ordinal(new_data$Type)
+
+new_data$Delivery.Status = encode_ordinal(new_data$Delivery.Status)
+
+new_data$Customer.Segment = encode_ordinal(new_data$Customer.Segment)
+
+new_data$Market = encode_ordinal(new_data$Market)
+
+new_data$Order.City = encode_ordinal(new_data$Order.City)
+
+new_data$Order.Country = encode_ordinal(new_data$Order.Country)
+
+new_data$Order.Status = encode_ordinal(new_data$Order.Status)
+
+new_data$Shipping.Mode = encode_ordinal(new_data$Shipping.Mode)
+
+#Convert char dates into POSIXct objects (Standardized "year-month-day UTC" format)
+new_data$`order.date.(DateOrders)` = mdy_hm(new_data$`order.date.(DateOrders)`)
+
+new_data$`shipping.date.(DateOrders)` = mdy_hm(new_data$`shipping.date.(DateOrders)`)
+
+#Separate order and shipping dates into 4 features (days, months, years and hours) to use them in the classification model
+order_days = day(new_data$`order.date.(DateOrders)`)
+order_months = month(new_data$`order.date.(DateOrders)`)
+order_years = year(new_data$`order.date.(DateOrders)`)
+order_hours = hour(new_data$`order.date.(DateOrders)`)
+
+shipping_days = day(new_data$`shipping.date.(DateOrders)`)
+shipping_months = month(new_data$`shipping.date.(DateOrders)`)
+shipping_years = year(new_data$`shipping.date.(DateOrders)`)
+shipping_hours = hour(new_data$`shipping.date.(DateOrders)`)
+
+fraud = ifelse(fraud=="FRAUD", 1, 0)
+
+new_data = cbind(new_data, order_days, order_months, order_years, order_hours, shipping_days, shipping_months, shipping_years, shipping_hours, fraud)
+
+new_data = within(new_data, rm(`order.date.(DateOrders)`, `shipping.date.(DateOrders)`, Order.Status))
+
+library(xlsx)
+write.xlsx(cor(new_data),"Correlations1.xlsx")
+
+#Remove duplicated and single-valued columns 
+new_data = within(new_data, rm(Order.Profit.Per.Order, Sales, Order.Item.Total, Product.Card.Id, Order.Item.Id, Order.Item.Product.Price, Product.Status))
+
+write.xlsx(cor(new_data),"Correlations2.xlsx")
+                  
+#Min-Max Normalization
+# normalize <- function(x) {
+#   return ((x - min(x)) / (max(x) - min(x)))
+# }
+# 
+# new_data[,1:28] = normalize(new_data[,1:28])
+
+new_data = distinct(new_data)
+```
+
+## 2. Subset Selection:
+
+If we look at the correlation matrix of our data set (Kindly refer to the *Correlations2.xlsx* file), we can see that the strongest correlation between the *Fraud* target and other features equals 0.39. This leaves us unsure about which features can be considered as good predictors to build our models. To break this uncertainty, we will use the **Best Subset Selection** approach to trim our data to the features which are deemed important.
+
+Considering that the optimal number of predictors is unknown, let's have a look at all possible N-Variable models (N ranges between 1 and the number of features of our data set, which is 28 in this case).
+
+```{r subset_selection}
+regfit = regsubsets(fraud ~.,new_data, nvmax=ncol(new_data)-1)
+reg_summary = summary(regfit)
+reg_summary
+```
+
+In order to choose the optimal number of predictors, let's plot the Residual Sum of Squares, Adjusted R², Mallow's Cp and Bayesian Information Criterion metrics for each number of variables:
+
+```{r}
+par(mfrow =c(2,2))
+plot(reg_summary$rss ,xlab=" Number of Variables ",ylab=" RSS",
+type="l")
+num_var = which.min (reg_summary$rss)
+points (num_var, reg_summary$rss[num_var], col ="red",cex =2, pch =20)
+plot(reg_summary$adjr2 ,xlab =" Number of Variables ",
+ylab=" Adjusted RSq",type="l")
+num_var = which.max (reg_summary$adjr2)
+points (num_var, reg_summary$adjr2[num_var], col ="red",cex =2, pch =20)
+plot(reg_summary$cp ,xlab=" Number of Variables ",ylab=" Mallow's Cp",
+type="l")
+num_var = which.min (reg_summary$cp)
+points (num_var, reg_summary$cp[num_var], col ="red",cex =2, pch =20)
+plot(reg_summary$bic ,xlab =" Number of Variables ",
+ylab=" Bayesian Information Criterion",type="l")
+num_var = which.min (reg_summary$bic)
+points (num_var, reg_summary$bic[num_var], col ="red",cex =2, pch =20)
+```
+
+```{r}
+num_pred = which.min(reg_summary$bic)
+```
+
+Our aim is to minimize the RSS, Cp and BIC and to maximize the adjusted R². If we look at the RSS metric alone, we would select all 28 features, since they give the minimal RSS score (14 variables would give the same results according to Occam's Razor principle though). However, if we consider the Cp, BIC and adjusted R² in addition to RSS, we would opt for a 13-variable model, which minimizes the RSS, Cp and BIC and maximizes the adjusted R² at the same time. Hence, we will use 13-variable models in the next sections.
+
+Regsubsets suggests the following 13 predictors, which we will use to train our models later on: *Type, Scheduled Days for Shipment, Delivery Status, Customer ID, Shipping Mode, Order Days, Oder Months, Order Years, Order Hours, Shipping Days, Shipping Months, Shipping Years, Shipping Hours*.
+
+```{r results="hide"}
+names(coef(regfit, 13))
+```
+
+```{r}
+new_data_ = new_data %>% select (Type, `Days.for.shipment.(scheduled)`, Delivery.Status, Customer.Id, Shipping.Mode, order_days, order_months, order_years, order_hours, shipping_days, shipping_months, shipping_years, shipping_hours, fraud)
+```
+
+
+## 3. Data Splitting:
+
+As an initial step, we will divide our initial data set into two subsets:
+
+  - Training Set, which consists of 70% samples of the original data set, selected randomly.
+  
+  - Test Set, which represents the remaining 30% of the initial data set.
+  
+
+```{r}
+library(caret)
+set.seed(1)
+train_indexes = sample(1:nrow(new_data_),size=0.7*nrow(new_data_), replace=FALSE) 
+train_data = new_data_[train_indexes,]
+test_data = new_data_[-train_indexes,]
+train_inputs = train_data[,1:13]
+train_outputs = train_data$fraud
+test_inputs = test_data[,1:13]
+test_outputs = test_data$fraud
+```
+  
+The training set is a key element in the learning phase. The more diverse and balanced it is, the better the accuracy, sensitivity and specificity of the trained models are.
+
+Let's have a look at the proportions of our target variable in the training set:
+
+```{r}
+prop1 = prop.table(table(train_data$fraud))
+pander(prop1)
+```
+
+The training set is clearly unbalanced. 97.74% of the training samples represent non fraudulent transactions while only 2.26% represent fraudulent transactions. This is a common problem in fraud detection, as fraud is the rarest event.
+
+If we keep the training set as it is, it will be biased towards recognizing genuine transactions (great Specificity but very bad Sensitivity). And eventhough the accuracy could be high, the trained model would still perform poorly.
+
+Thus, we will use the SMOTE function to generate synthetic fraudulent samples and ideally get as many fraudulent samples as non-fraudulent ones.
+
+```{r}
+library(DMwR)
+train_data$fraud = as.factor(train_data$fraud)
+train_data = SMOTE(fraud ~., train_data, perc.over = 100, perc.under = 200)
+```
+
+New SMOTEd training set's proportions:
+
+```{r}
+prop2 = prop.table(table(train_data$fraud))
+pander(prop2)
+```
+
+As we can see, the training set is now perfectly balanced and ready to be used to train our models.
+
+```{r}
+sensitivity = function(matrix){
+  return (round(matrix[2,2]*100/(matrix[1,2]+matrix[2,2]),2))
+}
+specificity = function(matrix){
+  return (round(matrix[1,1]*100/(matrix[2,1]+matrix[1,1]),2))
+}
+```
+
+## 4. K-Nearest Neighbors: 
+
+As a first algorithm, we will implement the KNN which is a simple and non-parametric algorithm. It does not depend on features and only calculates Euclidean distances between data points. However, since every feature is considered as a coordinate and since K distances are calculated for each data point, the KNN algorithm is computationally expensive. This will be demonstrated later in the learning phase.
+
+We will test our KNN model using 10 odd values of K to avoid any tie on the majority class among the K neighbors, since we have a binary problem. The performance metric which will be used is the accuracy, based on which the best K value will be selected.
+
+```{r}
+train_control <- trainControl(method  = "cv", number  = 10)
+```
+
+```{r KNN}
+train_data$fraud = as.factor(train_data$fraud)
+test_data$fraud = as.factor(test_data$fraud)
+set.seed(1)
+start = Sys.time()
+knn = train(fraud ~ .,
+             method     = "knn",
+             tuneLength = 10,
+             trControl  = train_control,
+             metric     = "Accuracy",
+             maximize   = TRUE,
+             data       = train_data)
+end = Sys.time()
+exe_time_knn = end - start
+pander(knn$results[,c(1,2,3)])
+```
+
+As we can see, the best Cross Validation accuracy was achieved using 5 neighbors. The accuracy seems to be decreasing the more K increases. Let's see if a K value of 3 or 1 can achieve a higher accuracy.
+
+```{r KNN2}
+start = Sys.time()
+knn2 = train(fraud ~ .,
+             method     = "knn",
+             metric     = "Accuracy",
+             tuneGrid = expand.grid(.k = c(1,3)),
+             maximize   = TRUE,
+             data       = train_data)
+end = Sys.time()
+exe_time_knn2 = end - start
+pander(knn2$results[,c(1,2,3)])
+```
+
+One neighbor seems to be enough in this case, since it gives the highest accuracy among other K values. This means that there are no significant groups within the data (the whole data can be seen as one group).
+
+Now let's see how our **1NN** model will perform on the test set:
+
+Confusion Matrix:
+
+```{r}
+pred_knn <- predict(knn2, test_data)    
+acc_knn = round(mean(pred_knn == test_data$fraud)*100, 2)
+sens_knn = sensitivity(table(pred_knn, test_outputs))
+spec_knn = specificity(table(pred_knn, test_outputs))
+cm = confusionMatrix(pred_knn, test_data$fraud, positive="1")
+knitr::kable(cm$table) %>%
+    kable_styling(font_size=9) %>%
+    column_spec(2,width="3in")
+```
+
+Model Results:
+
+```{r}
+knitr::kable(cm$byClass) %>%
+    kable_styling(font_size=9) %>%
+    column_spec(2,width="3in")
+```
+
+
+
+The accuracy is quite low (`r acc_knn`%). The sensitivity is not very bad but the model is obviously not specific (It tends to misclassify more than half of non-fraudulent transactions). The KNN algorithm seems to be a bad choice for this problem.
+
+## 5. Logistic Regression: 
+
+Now, let's try to do a logistic regression:
+
+
+```{r logistic_regression, results="hide"}
+library(stats)
+library(pROC)
+start = Sys.time()
+lr_model = glm(fraud ~.,data=train_data, family = binomial)
+end = Sys.time()
+exe_time_glm = end - start
+
+```
+
+```{r}
+knitr::kable(summary(lr_model)$coefficients) %>%
+    kable_styling(font_size=9) %>%
+    column_spec(2,width="2in")
+```
+
+
+Confusion Matrix:
+
+```{r results="hide"}
+glm.probs <- predict(lr_model,newdata=test_data,type = "response")
+glm.pred <- ifelse(glm.probs > 0.5, 1, 0)
+accuracy1 = round(mean(glm.pred == test_outputs)*100,2)
+auc1 = auc(roc(glm.pred, test_outputs))
+sens1 = sensitivity(table(glm.pred, test_outputs))
+spec1 = specificity(table(glm.pred, test_outputs))
+```
+```{r}
+knitr::kable(table(glm.pred, test_outputs)) %>%
+     kable_styling(font_size=9) %>%
+     column_spec(2,width="3in")
+
+```
+
+
+The logistic regression model gave a `r accuracy1`% accuracy in `r lr_model$iter` iterations, which is excellent. It also achieved an good AUC score `r auc1[1]`, which means that the trade-off between its precision and recall is well managed. The model is also very sensitive (`r sens1`%) and specific (`r spec1`%). There is only a few number of false positives.
+
+The logistic regression model also suggests that the strongest predictors are order and shipping dates and times. Let's verify if this is true:
+
+Confusion Matrix:
+
+```{r}
+lr_model2 = glm(fraud ~ order_days+order_months+order_years+ order_hours+shipping_months+shipping_days+shipping_years+ shipping_hours, data=train_data, family = binomial)
+#summary(lr_model2)
+glm.probs <- predict(lr_model2,newdata=test_data,type = "response")
+glm.pred <- ifelse(glm.probs > 0.5, 1, 0)
+accuracy1.1 = round(mean(glm.pred == test_outputs)*100,2)
+```
+
+```{r}
+knitr::kable(table(glm.pred, test_outputs)) %>%
+     kable_styling(font_size=9) %>%
+     column_spec(2,width="3in")
+```
+
+
+Those assumptions are definitely not correct as the accuracy dropped significantly (From `r accuracy1`% to `r accuracy1.1`%). This means that a model's performance cannot always be judged based on low P-Values of its predictors.
+
+## 6. Support Vector Machines:
+
+Now let's build an SVM model using a Linear Kernel with 10 default levels of tuning parameters and select the best parameter values using a 10-fold cross validation:
+
+```{r}
+start = Sys.time()
+fit_svm <- train(fraud ~ ., train_data, 
+                 method = "svmLinear", 
+                 trControl = train_control, 
+                 metric=c("Accuracy"),
+                 preProcess = c("center", "scale"), 
+                 tuneLength = 10)
+end = Sys.time()
+exe_time_svm = end - start
+pander(fit_svm$results)
+```
+
+The model achieved a perfect cross validation accuracy using the first fold only. Let's see how it performs on our test set:
+
+```{r}
+pred_svm <- predict(fit_svm, cbind(test_data[,1:13], as.factor(test_data$fraud)))
+acc_svm = round(mean(pred_svm == as.factor(test_data$fraud)),2)*100
+sens2 = sensitivity(table(pred_svm, test_outputs))
+spec2 = specificity(table(pred_svm, test_outputs))
+cm = confusionMatrix(pred_svm, as.factor(test_data$fraud), positive = "1")
+knitr::kable(cm$table) %>%
+    kable_styling(font_size=9) %>%
+    column_spec(2,width="3in")
+```
+
+It still performs very well on a different set with a few false positives again and 100% true positives. We can conclude that our data set is linearly separable.
+
+## 7. Random Forest:
+
+Now we will build a random forest model with 3 default levels of tuning parameters and select the best parameter values using a 10-fold cross validation:
+
+```{r}
+start = Sys.time()
+tree = train(fraud ~., train_data,
+                  method="rf", 
+                  trControl = train_control,
+                  metric = "Accuracy",
+                  tuneLength = 3)
+end = Sys.time()
+exe_time_rf = end - start
+pander(tree$results)
+```
+
+The best cross validation accuracy was achieved using 7 random variables at each split.
+
+Again, let's see how the tuned model performs on our test set:
+
+```{r}
+pred_tree <- predict(tree, test_data) 
+acc_tree = round(mean(pred_tree==test_data$fraud),2)*100
+sens_tree = sensitivity(table(pred_tree, test_outputs))
+spec_tree = specificity(table(pred_tree, test_outputs))
+cm = confusionMatrix(pred_tree, test_data$fraud)
+knitr::kable(cm$table) %>%
+    kable_styling(font_size=9) %>%
+    column_spec(2,width="3in")
+#rmse(as.numeric(test_data$fraud),as.numeric(pred_tree))
+```
+
+The model performs very well with an accuracy of `r acc_tree`% and a neglectable number of false positives and false negatives. Nevertheless, 4 false negatives in fraud detection is too much and can cost the company hundreds of thousands of dollars.
+
+## 8. Neural Networks:
+
+The last and the main algorithm is the Neural Networks algorithm. Since we have seen that our data is linearly separable, we will use one hidden-layer only and let the algorithm fine-tune hyper-parameters using a random search. The only stopping criterion that will be used here is the maximum number of iterations, which is intially fixed at 50.
+
+```{r results="hide"}
+set.seed(1)
+start = Sys.time()
+fit_nnet <- train(fraud ~ ., train_data,
+                  method = "nnet",
+                  preProc=c("center", "scale"),
+                  metric="Accuracy",
+                  trControl = train_control,
+                  maxit = 50)
+end = Sys.time()
+exe_time_nn = end - start
+```
+
+```{r}
+pander(fit_nnet$results)
+```
+
+The highest cross validation accuracy was achieved using one neuron. Let's see how the model performs on the test set: 
+
+```{r}
+pred_nnet <- predict(fit_nnet, test_data) 
+acc_nnet = round(mean(pred_nnet == test_data$fraud)*100,2)
+sens_nn = sensitivity(table(pred_nnet, test_outputs))
+spec_nn = specificity(table(pred_nnet, test_outputs))
+cm = confusionMatrix(pred_nnet, test_data$fraud)
+knitr::kable(cm$table) %>%
+    kable_styling(font_size=9) %>%
+    column_spec(2,width="3in")
+```
+
+Accuracy (`r acc_nnet`%), sensitivity (`r sens_nn`%) and specificity (`r spec_nn`%) are all excellent with the auto fine-tuned hyperparameters of the train function.
+
+Let's try to reduce the training time by dropping the number of iterations to 30:
+
+```{r results="hide"}
+set.seed(1)
+start = Sys.time()
+fit_nnet <- train(fraud ~ ., train_data,
+                  method = "nnet",
+                  preProc=c("center", "scale"),
+                  metric="Accuracy",
+                  trControl = train_control,
+                  maxit = 30)
+end = Sys.time()
+exe_time_nn2 = end - start
+```
+
+```{r}
+pander(fit_nnet$results)
+```
+
+```{r}
+pred_nnet <- predict(fit_nnet, test_data) 
+acc_nnet2 = round(mean(pred_nnet == test_data$fraud)*100,2)
+sens_nn2 = sensitivity(table(pred_nnet, test_outputs))
+spec_nn2 = specificity(table(pred_nnet, test_outputs))
+cm = confusionMatrix(pred_nnet, test_data$fraud)
+knitr::kable(cm$table) %>%
+    kable_styling(font_size=9) %>%
+    column_spec(2,width="3in")
+```
+
+The model's performance and architecture are the same with 30 iterations.
+
+Will 20 iterations break the rule?:
+
+```{r results="hide"}
+set.seed(1)
+start = Sys.time()
+fit_nnet <- train(fraud ~ ., train_data,
+                  method = "nnet",
+                  preProc=c("center", "scale"),
+                  metric="Accuracy",
+                  trControl = train_control,
+                  maxit = 20)
+end = Sys.time()
+exe_time_nn3 = end - start
+```
+
+```{r}
+pander(fit_nnet$results)
+```
+
+```{r}
+pred_nnet <- predict(fit_nnet, test_data) 
+acc_nnet3 = round(mean(pred_nnet == test_data$fraud)*100,2)
+sens_nn3 = sensitivity(table(pred_nnet, test_outputs))
+spec_nn3 = specificity(table(pred_nnet, test_outputs))
+cm = confusionMatrix(pred_nnet, test_data$fraud)
+knitr::kable(cm$table) %>%
+    kable_styling(font_size=9) %>%
+    column_spec(2,width="3in")
+```
+
+In 20 iterations, the model misclassifies two fraudulent transactions with a slightly reduced accuracy of `r acc_nnet3`% compared to the two previous models. In addition, it uses 5 neurons in the hidden layer, which means more calculations and subsequently, a higher training time.
+
+Now let's try to set the initial hyperparameter values manually and see which method is the most effective. We will use two repetitions with a repeated 10-Fold Cross Validation, a decay of 3.16e-3, 50000 maximum weights and 100 maximum iterations:
+
+```{r}
+train_control_1 <- trainControl(method  = "repeatedcv", 
+                              number  = 10,
+                              repeats = 2)
+```
+
+
+```{r results="hide"}
+set.seed(1)
+start = Sys.time()
+fit_nnet <- train(fraud ~ ., train_data,
+                  method = "nnet",
+                  preProc=c("center", "scale"),
+                  metric="Accuracy",
+                  tuneGrid = expand.grid(
+                    .size = 25,
+                    .decay = 0.003162278),
+                  trControl = train_control_1,
+                  MaxNWts = 50000,
+                  maxit = 100,
+                  trace = FALSE)
+end = Sys.time()
+exe_time_nn4 = end - start
+```
+
+
+```{r}
+pred_nnet <- predict(fit_nnet, test_data) 
+acc_nnet4 = round(mean(pred_nnet == test_data$fraud)*100,2)
+sens_nn4 = sensitivity(table(pred_nnet, test_outputs))
+spec_nn4 = specificity(table(pred_nnet, test_outputs))
+cm = confusionMatrix(pred_nnet, test_data$fraud)
+knitr::kable(cm$table) %>%
+    kable_styling(font_size=9) %>%
+    column_spec(2,width="3in")
+```
+
+The accuracy improves slightly (`r acc_nnet4`)%, but the `r cm$table[1,2]` false negatives on their own are enough to say that the model performs poorly.
+
+We can conclude that initial hyperparameter values are hard to set. They put us in a long "randomly set-and-test" loop, which does not always lead to satisfying results.
+
+The 30-iteration and 1 neuron model wins the battle in this case. Hence, it will be used for comparison with the aforementioned algorithms.
+
+## 7. Conclusion:
+
+Throughout this project, we have used the **Caret** package which lets us train different kinds of models using different sampling methods.
+
+The approach we have adopted consists of defining a fixed tuning length and letting the **Train** function do a random search by using default initial hyper-parameter values and fine-tuning those values using a 10-fold cross validation. The best set of values correspond to the highest accuracy.
+
+The following table shows the accuracies, sensitivities and specificities of the five models built:
+
+```{r}
+
+models = c("KNN", "Logistic Regression", "SVM", "Random Forest", "Neural Networks")
+
+accuracies = c(acc_knn, accuracy1, acc_svm, acc_tree, acc_nnet)
+
+sensitivities = c(sens_knn, sens1, sens2, sens_tree, sens_nn2)
+
+specificities = c(spec_knn, spec1, spec2, spec_tree, spec_nn2)
+
+training_times = c(exe_time_knn, exe_time_glm, exe_time_svm, exe_time_rf, exe_time_nn2)
+
+#Table Header
+h1 = "Model"
+h2 = "Accuracy"
+h3 = "Sensitivity"
+h4 = "Specificity"
+h5 = "Training Time"
+
+comparison = data.frame(models, accuracies, sensitivities, specificities, training_times, stringsAsFactors=FALSE)
+names(comparison) = c(h1, h2, h3, h4, h5)
+library(pander)
+pander(comparison)
+```
+
+As we can see, the highest accuracy was given by the **Logistic Regression** and the **Neural Networks** models, with the same perfect sensitivity. However, the Logistic Regression is significantly faster than the Neural Network. Thousands, if not millions, of E-Commerce transactions happen daily, thus causing a continuous data increase. The more samples we have, the model needs to be updated and its learning time becomes crucial. Since there is a simple and effective solution, there is no need to go for complex alternatives (according to Occam's Razor).
+
+Hence, if we were to implement a fraud detection system using this data set, we would definitely use the **Logistic Regression**. 
+
+# V. Future work (assumptions and potential extensions):
+
+  1. Feature engineering: This helps to extract more information from existing data. Feature engineering is highly influenced by hypotheses generation. Good hypothesis result in good features. That is why, it is always fruitful to invest quality time in hypothesis generation.
+  
+  2. A domain expert can help us further extract insights from our data set.
+  
+  3. Product price, product category and market region are significant factors that can aid in our fraud detection process.
+  
+  4. Ensemble modeling: This technique simply combines the result of multiple weak models and produce better results. This can be achieved through many ways: 
+  
+      - Bagging (Bootstrap Aggregating)
+      
+      - Boosting
+
+# VI. References:
+
+[[1] Constante, Fabian; Silva, Fernando; Pereira, António (2019), “DataCo SMART SUPPLY CHAIN FOR BIG DATA ANALYSIS”, Mendeley Data, V5, doi: 10.17632/8gx2fvg2k6.5](https://data.mendeley.com/datasets/8gx2fvg2k6/5)
